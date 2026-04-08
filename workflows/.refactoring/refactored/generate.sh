@@ -21,7 +21,7 @@ for _d in \
 done
 TARGET_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT_DIR="${1:-${TARGET_DIR}/.refactoring/sandbox}"
-export JF_PATH="${TARGET_DIR}/.refactoring/refactored/shared"
+export JF_PATH="${TARGET_DIR}/.refactoring/refactored/shared:${TARGET_DIR}/.refactoring/refactored/shared/steps"
 
 # ── assemble ──────────────────────────────────────────────────────────────────
 REFACTORED="${TARGET_DIR}/.refactoring/refactored"
