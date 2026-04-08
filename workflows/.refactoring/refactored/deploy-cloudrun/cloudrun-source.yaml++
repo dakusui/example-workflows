@@ -5,7 +5,8 @@ name: Deploy to Cloud Run from Source
 jobs:
   deploy:
     steps:
-      - name: Checkout
+      - $extends:
+          - checkout-step.yaml++
         uses: actions/checkout@v2
       - $extends:
           - google-auth-step.yaml++
