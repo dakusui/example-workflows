@@ -1,0 +1,6 @@
+name: Google Auth
+id: auth
+uses: 'google-github-actions/auth@v0'
+with:
+  workload_identity_provider: '${{ vars.WIF_PROVIDER }}'
+  service_account: '${{ vars.WIF_SERVICE_ACCOUNT }}'

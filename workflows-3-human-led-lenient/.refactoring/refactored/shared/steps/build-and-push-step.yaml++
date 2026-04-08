@@ -1,0 +1,2 @@
+name: Build and Push Container
+run: 'eval:string:cloudrun::build_and_push'

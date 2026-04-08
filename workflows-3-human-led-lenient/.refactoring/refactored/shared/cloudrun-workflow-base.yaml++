@@ -1,0 +1,21 @@
+$extends:
+  - cloudrun.jq
+on:
+  push:
+    branches:
+      - $default-branch
+env:
+  PROJECT_ID: YOUR_PROJECT_ID
+  GAR_LOCATION: YOUR_GAR_LOCATION
+  REPOSITORY: YOUR_REPOSITORY_NAME
+  SERVICE: YOUR_SERVICE_NAME
+  REGION: YOUR_SERVICE_REGION
+  SOURCE_DIRECTORY: YOUR_SOURCE_DIRECTORY
+  APP: YOUR_APP_NAME
+jobs:
+  deploy:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    runs-on: ubuntu-latest
+    steps: []

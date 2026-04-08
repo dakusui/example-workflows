@@ -1,0 +1,27 @@
+$extends:
+  - cloudrun-workflow-base.yaml++
+name: Build and Deploy to Cloud Run with KRM
+jobs:
+  deploy:
+    steps:
+      - $extends:
+          - steps/checkout-step.yaml++
+      - $extends:
+          - steps/google-auth-step.yaml++
+        with:
+          token_format: 'access_token'
+      - $extends:
+          - steps/docker-auth-step.yaml++
+      - $extends:
+          - steps/build-and-push-step.yaml++
+      - name: Create Service declaration
+        run: |-
+          export IMAGE="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}"
+          export SERVICE="${{ env.SERVICE }}"
+          envsubst < ./workflows/deploy-cloudrun/service.template.yaml > service.yaml
+      - $extends:
+          - steps/deploy-cloudrun-step.yaml++
+        with:
+          metadata: service.yaml
+      - $extends:
+          - steps/show-output-step.yaml++
