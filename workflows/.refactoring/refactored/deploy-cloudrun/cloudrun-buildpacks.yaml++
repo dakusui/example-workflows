@@ -24,12 +24,10 @@ jobs:
         run: |-
           pack config default-builder gcr.io/buildpacks.builder:v1
           pack build ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }} --path=${{ env.SOURCE_DIRECTORY }} --publish
-      - name: Deploy to Cloud Run
-        id: deploy
+      - $extends:
+          - steps/deploy-cloudrun-step.yaml++
         uses: google-github-actions/deploy-cloudrun@v2
         with:
-          service: ${{ env.SERVICE }}
-          region: ${{ env.REGION }}
           image: "eval:string:cloudrun::gar_image_with_repo"
       - $extends:
           - steps/show-output-step.yaml++

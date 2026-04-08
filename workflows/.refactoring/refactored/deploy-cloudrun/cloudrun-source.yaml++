@@ -10,12 +10,9 @@ jobs:
         uses: actions/checkout@v2
       - $extends:
           - steps/google-auth-step.yaml++
-      - name: Deploy to Cloud Run
-        id: deploy
-        uses: google-github-actions/deploy-cloudrun@v0
+      - $extends:
+          - steps/deploy-cloudrun-step.yaml++
         with:
-          service: ${{ env.SERVICE }}
-          region: ${{ env.REGION }}
           source: ./
       - $extends:
           - steps/show-output-step.yaml++
