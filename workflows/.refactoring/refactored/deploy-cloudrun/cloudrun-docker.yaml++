@@ -1,8 +1,7 @@
 $extends:
   - cloudrun-workflow-base.yaml++
 name: Build and Deploy to Cloud Run
-env:
-  REPOSITORY: YOUR_REPOSITORY_NAME
+
 jobs:
   deploy:
     steps:
