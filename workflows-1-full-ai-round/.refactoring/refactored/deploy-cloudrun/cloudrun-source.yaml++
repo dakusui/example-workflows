@@ -1,0 +1,27 @@
+$extends:
+  - cloudrun-workflow-base.yaml++
+name: Deploy to Cloud Run from Source
+env:
+  PROJECT_ID: YOUR_PROJECT_ID
+  SERVICE: YOUR_SERVICE_NAME
+  REGION: YOUR_SERVICE_REGION
+jobs:
+  deploy:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v0'
+        with:
+          workload_identity_provider: '${{ vars.WIF_PROVIDER }}'
+          service_account: '${{ vars.WIF_SERVICE_ACCOUNT }}'
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v0
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          source: ./
+      - name: Show Output
+        run: echo ${{ steps.deploy.outputs.url }}
