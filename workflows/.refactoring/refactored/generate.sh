@@ -27,13 +27,12 @@ export JF_PATH="${TARGET_DIR}/.refactoring/refactored/shared"
 REFACTORED="${TARGET_DIR}/.refactoring/refactored"
 
 mkdir -p "${OUT_DIR}/deploy-cloudrun" \
-         "${OUT_DIR}/create-cloud-deploy-release/config" \
+         "${OUT_DIR}/create-cloud-deploy-release" \
          "${OUT_DIR}/get-gke-credentials"
 
-"${SKILL_BIN}/yjoin" --out-dir "${OUT_DIR}/deploy-cloudrun"                        "${REFACTORED}/deploy-cloudrun"
-"${SKILL_BIN}/yjoin" --out-dir "${OUT_DIR}/create-cloud-deploy-release"             "${REFACTORED}/create-cloud-deploy-release"
-"${SKILL_BIN}/yjoin" --out-dir "${OUT_DIR}/create-cloud-deploy-release/config"      "${REFACTORED}/create-cloud-deploy-release/config"
-"${SKILL_BIN}/yjoin" --out-dir "${OUT_DIR}/get-gke-credentials"                    "${REFACTORED}/get-gke-credentials"
+"${SKILL_BIN}/yjoin" --out-dir "${OUT_DIR}/deploy-cloudrun"             "${REFACTORED}/deploy-cloudrun"
+"${SKILL_BIN}/yjoin" --out-dir "${OUT_DIR}/create-cloud-deploy-release" "${REFACTORED}/create-cloud-deploy-release"
+"${SKILL_BIN}/yjoin" --out-dir "${OUT_DIR}/get-gke-credentials"         "${REFACTORED}/get-gke-credentials"
 
 # Rename *.yaml → *.yml for GitHub Actions workflow files
 for f in \
