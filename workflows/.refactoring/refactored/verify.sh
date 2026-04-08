@@ -2,13 +2,15 @@
 # Usage:
 #   verify.sh [DIR_A [DIR_B]]
 #
-# Checks that DIR_B (sandbox) contains all attributes and values present in
-# DIR_A (generated baseline).  Extra attributes in DIR_B are allowed.
-# Defaults: DIR_A=.refactoring/generated  DIR_B=.refactoring/sandbox
+# Checks semantic equivalence between DIR_A (generated baseline) and DIR_B
+# (sandbox), with one targeted relaxation:
 #
-# YAML/JSON containment is checked via jq's `contains` (recursive object
-# subset, array element subset).  On failure, a key-sorted diff is shown
-# for diagnosis.
+#   - All fields except root env:  strict equality (diff)
+#   - Root env: only              containment — sandbox may carry extra vars
+#                                 beyond what generated declares
+#
+# Defaults: DIR_A=.refactoring/generated  DIR_B=.refactoring/sandbox
+# JSON files are compared via strict jq -S diff (no env: relaxation).
 #
 # Exits 0 if all files pass, non-zero if any fail.
 
@@ -22,36 +24,46 @@ fail=0
 
 check_yaml() {
   local fa="$1" fb="$2" rel="$3"
-  local gen_json sandbox_json result
-  gen_json=$(yq '.' "${fa}" | grep -v '^null$')
-  sandbox_json=$(yq '.' "${fb}" | grep -v '^null$')
-  result=$(printf '%s' "${sandbox_json}" | jq --argjson gen "${gen_json}" '. | contains($gen)')
-  if [[ "${result}" == "true" ]]; then
+  local err=0 out result gen_env sandbox_env
+
+  # Strict check on everything except root env:
+  if ! out=$(diff \
+      <(yq -S 'del(.env)' "${fa}" | grep -v '^null$') \
+      <(yq -S 'del(.env)' "${fb}" | grep -v '^null$') 2>&1); then
+    echo "FAIL: ${rel}  (non-env fields differ)"
+    echo "${out}" | sed 's/^/      /'
+    err=1
+  fi
+
+  # Containment check on root env: only
+  gen_env=$(yq '.env // {}' "${fa}")
+  sandbox_env=$(yq '.env // {}' "${fb}")
+  result=$(printf '%s' "${sandbox_env}" | jq --argjson gen "${gen_env}" '. | contains($gen)')
+  if [[ "${result}" != "true" ]]; then
+    echo "FAIL: ${rel}  (sandbox env: missing required vars from generated)"
+    diff \
+      <(printf '%s\n' "${gen_env}"     | jq -S .) \
+      <(printf '%s\n' "${sandbox_env}" | jq -S .) 2>&1 | head -20 | sed 's/^/      /'
+    err=1
+  fi
+
+  if [[ ${err} -eq 0 ]]; then
     echo "OK:   ${rel}"
     pass=$((pass + 1))
   else
-    echo "FAIL: ${rel}  (sandbox is missing required fields from generated)"
-    diff \
-      <(printf '%s\n' "${gen_json}"     | jq -S .) \
-      <(printf '%s\n' "${sandbox_json}" | jq -S .) 2>&1 | head -30 | sed 's/^/      /'
     fail=$((fail + 1))
   fi
 }
 
 check_json() {
   local fa="$1" fb="$2" rel="$3"
-  local gen_json sandbox_json result
-  gen_json=$(jq . "${fa}")
-  sandbox_json=$(jq . "${fb}")
-  result=$(printf '%s' "${sandbox_json}" | jq --argjson gen "${gen_json}" '. | contains($gen)')
-  if [[ "${result}" == "true" ]]; then
+  local out
+  if out=$(diff <(jq -S . "${fa}") <(jq -S . "${fb}") 2>&1); then
     echo "OK:   ${rel}"
     pass=$((pass + 1))
   else
-    echo "FAIL: ${rel}  (sandbox is missing required fields from generated)"
-    diff \
-      <(printf '%s\n' "${gen_json}"     | jq -S .) \
-      <(printf '%s\n' "${sandbox_json}" | jq -S .) 2>&1 | head -30 | sed 's/^/      /'
+    echo "FAIL: ${rel}"
+    echo "${out}" | sed 's/^/      /'
     fail=$((fail + 1))
   fi
 }
