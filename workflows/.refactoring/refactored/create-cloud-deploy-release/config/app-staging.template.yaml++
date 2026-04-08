@@ -1,0 +1,13 @@
+$extends:
+  - app-service-base.yaml++
+metadata:
+  name: 'app-staging'
+spec:
+  template:
+    spec:
+      containers:
+      - name: 'app'
+        image: 'app'
+        env:
+          - name: 'TARGET'
+            value: 'Staging'
