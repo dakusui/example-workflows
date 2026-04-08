@@ -32,9 +32,10 @@ declare env vars that not every leaf workflow uses.
 
 ## Bugs found
 
-Two pre-existing bugs in the original source files were discovered as a direct
-consequence of refactoring. Both were invisible in the standalone originals and
-became visible only when shared structure was extracted.
+Five pre-existing bugs in the original source files were discovered as a direct
+consequence of refactoring. All were invisible in the standalone originals and
+became visible only when shared structure was extracted. Two have been fixed;
+three are noted below and left for a future pass.
 
 ### APP env var used a concrete value instead of a placeholder
 
@@ -57,6 +58,27 @@ now-redundant override.
 base, the `@v2` override in `cloudrun-declarative` appeared as an explicit
 leaf-level exception — a leaf overriding its base to a *newer* version is a
 clear signal that the base is stale.
+
+### *(Not yet fixed)* google-github-actions/auth version inconsistent across workflows
+
+`google-auth-step.yaml++` declares `uses: google-github-actions/auth@v0`.
+`create-cloud-deploy-release` overrides it to `@v1`. The four deploy-cloudrun
+workflows and the GKE workflow stay on `@v0`. The base should be updated to
+`@v1` and the override removed.
+
+### *(Not yet fixed)* actions/checkout version inconsistent across workflows
+
+`checkout-step.yaml++` declares `uses: actions/checkout@v3`.
+`cloudrun-docker` and `cloudrun-source` override it to `@v2`. These two are
+pinned to an older version; the overrides should either be removed (accepting
+`@v3`) or the base should be reconsidered.
+
+### *(Not yet fixed)* google-github-actions/deploy-cloudrun version inconsistent across workflows
+
+`deploy-cloudrun-step.yaml++` declares `uses: google-github-actions/deploy-cloudrun@v0`.
+`cloudrun-buildpacks` overrides it to `@v2` — a two-major-version jump — while
+the other three deploy-cloudrun workflows stay on `@v0`. The base should be
+updated to `@v2` and the override removed.
 
 ## Findings
 
