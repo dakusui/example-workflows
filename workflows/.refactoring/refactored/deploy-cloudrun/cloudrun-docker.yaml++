@@ -8,16 +8,16 @@ jobs:
   deploy:
     steps:
       - $extends:
-          - checkout-step.yaml++
+          - steps/checkout-step.yaml++
         uses: actions/checkout@v2
       - $extends:
-          - google-auth-step.yaml++
+          - steps/google-auth-step.yaml++
         with:
           token_format: 'access_token'
       - $extends:
-          - docker-auth-step.yaml++
+          - steps/docker-auth-step.yaml++
       - $extends:
-          - build-and-push-step.yaml++
+          - steps/build-and-push-step.yaml++
         run: 'eval:string:cloudrun::build_and_push_with_repo'
       - name: Deploy to Cloud Run
         id: deploy
@@ -27,4 +27,4 @@ jobs:
           region: ${{ env.REGION }}
           image: "eval:string:cloudrun::gar_image_with_repo"
       - $extends:
-          - show-output-step.yaml++
+          - steps/show-output-step.yaml++
