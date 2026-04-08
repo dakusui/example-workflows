@@ -24,7 +24,6 @@ jobs:
           - steps/checkout-step.yaml++
       - $extends:
           - steps/google-auth-step.yaml++
-        id: 'auth'
         name: 'Authenticate to Google Cloud'
         with:
           token_format: 'access_token'
