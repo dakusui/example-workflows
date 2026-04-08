@@ -12,7 +12,6 @@ jobs:
           token_format: 'access_token'
       - $extends:
           - steps/docker-auth-step.yaml++
-        uses: 'docker/login-action@v2'
       - $extends:
           - steps/build-and-push-step.yaml++
       - name: Create Service declaration
