@@ -1,0 +1,6 @@
+name: Deploy to Cloud Run
+id: deploy
+uses: google-github-actions/deploy-cloudrun@v0
+with:
+  service: ${{ env.SERVICE }}
+  region: ${{ env.REGION }}
