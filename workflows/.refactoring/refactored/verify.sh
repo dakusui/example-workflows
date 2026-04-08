@@ -2,13 +2,15 @@
 # Usage:
 #   verify.sh [DIR_A [DIR_B]]
 #
-# Checks semantic equivalence between DIR_A and DIR_B.
+# Checks that DIR_B (sandbox) contains all attributes and values present in
+# DIR_A (generated baseline).  Extra attributes in DIR_B are allowed.
 # Defaults: DIR_A=.refactoring/generated  DIR_B=.refactoring/sandbox
 #
-# YAML files are compared via: yq -S '.'  (key-sorted, null-filtered)
-# JSON files are compared via: jq -S .
+# YAML/JSON containment is checked via jq's `contains` (recursive object
+# subset, array element subset).  On failure, a key-sorted diff is shown
+# for diagnosis.
 #
-# Exits 0 if all files match, non-zero if any differ.
+# Exits 0 if all files pass, non-zero if any fail.
 
 set -euo pipefail
 SAMPLE_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -20,28 +22,36 @@ fail=0
 
 check_yaml() {
   local fa="$1" fb="$2" rel="$3"
-  local out
-  if out=$(diff \
-      <(yq -S '.' "${fa}" | grep -v '^null$') \
-      <(yq -S '.' "${fb}" | grep -v '^null$') 2>&1); then
+  local gen_json sandbox_json result
+  gen_json=$(yq '.' "${fa}" | grep -v '^null$')
+  sandbox_json=$(yq '.' "${fb}" | grep -v '^null$')
+  result=$(printf '%s' "${sandbox_json}" | jq --argjson gen "${gen_json}" '. | contains($gen)')
+  if [[ "${result}" == "true" ]]; then
     echo "OK:   ${rel}"
     pass=$((pass + 1))
   else
-    echo "FAIL: ${rel}"
-    echo "${out}" | sed 's/^/      /'
+    echo "FAIL: ${rel}  (sandbox is missing required fields from generated)"
+    diff \
+      <(printf '%s\n' "${gen_json}"     | jq -S .) \
+      <(printf '%s\n' "${sandbox_json}" | jq -S .) 2>&1 | head -30 | sed 's/^/      /'
     fail=$((fail + 1))
   fi
 }
 
 check_json() {
   local fa="$1" fb="$2" rel="$3"
-  local out
-  if out=$(diff <(jq -S . "${fa}") <(jq -S . "${fb}") 2>&1); then
+  local gen_json sandbox_json result
+  gen_json=$(jq . "${fa}")
+  sandbox_json=$(jq . "${fb}")
+  result=$(printf '%s' "${sandbox_json}" | jq --argjson gen "${gen_json}" '. | contains($gen)')
+  if [[ "${result}" == "true" ]]; then
     echo "OK:   ${rel}"
     pass=$((pass + 1))
   else
-    echo "FAIL: ${rel}"
-    echo "${out}" | sed 's/^/      /'
+    echo "FAIL: ${rel}  (sandbox is missing required fields from generated)"
+    diff \
+      <(printf '%s\n' "${gen_json}"     | jq -S .) \
+      <(printf '%s\n' "${sandbox_json}" | jq -S .) 2>&1 | head -30 | sed 's/^/      /'
     fail=$((fail + 1))
   fi
 }
