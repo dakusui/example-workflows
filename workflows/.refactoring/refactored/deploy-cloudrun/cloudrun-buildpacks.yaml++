@@ -31,5 +31,5 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
           image: "eval:string:cloudrun::gar_image_with_repo"
-      - name: Show Output
-        run: echo ${{ steps.deploy.outputs.url }}
+      - $extends:
+          - show-output-step.yaml++
