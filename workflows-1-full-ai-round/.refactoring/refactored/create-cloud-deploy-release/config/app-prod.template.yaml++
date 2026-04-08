@@ -1,0 +1,13 @@
+$extends:
+  - app-service-base.yaml++
+metadata:
+  name: 'app-prod'
+spec:
+  template:
+    spec:
+      containers:
+      - name: 'app'
+        image: 'app'
+        env:
+          - name: 'TARGET'
+            value: 'Prod'
