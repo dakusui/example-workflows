@@ -1,0 +1,18 @@
+$extends:
+  - cloudrun-workflow-base.yaml++
+name: Deploy to Cloud Run from Source
+# env vars inherited from base: PROJECT_ID, SERVICE, REGION
+jobs:
+  deploy:
+    steps:
+      - $extends:
+          - steps/checkout-step.yaml++
+        uses: actions/checkout@v2
+      - $extends:
+          - steps/google-auth-step.yaml++
+      - $extends:
+          - steps/deploy-cloudrun-step.yaml++
+        with:
+          source: ./
+      - $extends:
+          - steps/show-output-step.yaml++
