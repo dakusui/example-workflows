@@ -21,9 +21,9 @@ jobs:
       id-token: 'write'
     steps:
       - $extends:
-          - checkout-step.yaml++
+          - steps/checkout-step.yaml++
       - $extends:
-          - google-auth-step.yaml++
+          - steps/google-auth-step.yaml++
         id: 'auth'
         name: 'Authenticate to Google Cloud'
         with:

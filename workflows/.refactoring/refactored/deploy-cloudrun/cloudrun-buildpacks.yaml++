@@ -9,13 +9,13 @@ jobs:
   deploy:
     steps:
       - $extends:
-          - checkout-step.yaml++
+          - steps/checkout-step.yaml++
       - $extends:
-          - google-auth-step.yaml++
+          - steps/google-auth-step.yaml++
         with:
           token_format: 'access_token'
       - $extends:
-          - docker-auth-step.yaml++
+          - steps/docker-auth-step.yaml++
       - id: setup-tools
         uses: buildpacks/github-actions/setup-tools@v5.1.0
       - id: setup-pack
@@ -32,4 +32,4 @@ jobs:
           region: ${{ env.REGION }}
           image: "eval:string:cloudrun::gar_image_with_repo"
       - $extends:
-          - show-output-step.yaml++
+          - steps/show-output-step.yaml++
