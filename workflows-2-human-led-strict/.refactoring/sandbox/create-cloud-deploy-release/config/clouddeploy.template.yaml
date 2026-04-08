@@ -1,0 +1,29 @@
+apiVersion: deploy.cloud.google.com/v1
+description: Deployment pipeline for demo app
+kind: DeliveryPipeline
+metadata:
+  name: app
+serialPipeline:
+  stages:
+    - profiles:
+        - staging
+      targetId: staging
+    - profiles:
+        - prod
+      targetId: prod
+---
+apiVersion: deploy.cloud.google.com/v1
+description: Staging target
+kind: Target
+metadata:
+  name: staging
+run:
+  location: projects/${PROJECT_ID}/locations/${REGION}
+---
+apiVersion: deploy.cloud.google.com/v1
+description: Production target
+kind: Target
+metadata:
+  name: prod
+run:
+  location: projects/${PROJECT_ID}/locations/${REGION}
