@@ -6,7 +6,6 @@ on:
     branches:
       - $default_branch
 env:
-  GAR_LOCATION: YOUR_GAR_LOCATION
   REGION: YOUR_APP_REGION
   APP: app
 jobs:
