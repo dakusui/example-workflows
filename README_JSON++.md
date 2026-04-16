@@ -80,6 +80,48 @@ A successful run prints `PASS  N/N files match`.
 > (`refactored ⊇ generated`). This allows the shared base to declare env vars
 > that not every leaf workflow uses without failing verification.
 
+## Measuring structural duplication
+
+The `duplication.py` script (in `.claude/skills/report-refactored-yamls/bin/`) measures
+how much of a YAML/JSON file set is redundant cross-file repetition. It finds all
+repeated sub-tree fragments (≥ 3 key-value pairs) and reports:
+
+```
+Files scanned        : 6
+Total size           : 266
+Duplicated excess    : 24
+DuplicationRatio     : 0.090226
+Maximal dup groups   : 3
+```
+
+- **Total size** — total key-value pairs across all parsed documents
+- **Duplicated excess** — key-value pairs that are copies of something else in the set
+- **DuplicationRatio** — `duplicated_excess / total_size`; 0.0 = no duplication
+
+Run it against any directory of YAML/JSON files:
+
+```bash
+SKILL_BIN="$(git rev-parse --show-toplevel)/.claude/skills/report-refactored-yamls/bin"
+python3 "${SKILL_BIN}/duplication.py" workflows/.refactoring/generated
+python3 "${SKILL_BIN}/duplication.py" workflows/.refactoring/refactored
+```
+
+Use `.refactoring/generated/` as the baseline (comment-stripped originals) and
+`.refactoring/refactored/` as the refactored sources. Results from this repository's
+three refactoring snapshots illustrate the range of outcomes:
+
+| Snapshot | Baseline DupRatio | Refactored DupRatio | Change |
+|---|---|---|---|
+| `workflows-1-full-ai-round` | 6.8% | 7.2% | +0.4 pp |
+| `workflows-2-human-led-strict` | 9.0% | 3.0% | −6.0 pp |
+| `workflows-3-human-led-lenient` | 18.7% | 3.1% | −15.6 pp |
+
+The AI-led round (`workflows-1`) extracted only document-level bases and left all steps
+inline, so the DuplicationRatio barely moved. The human-led rounds additionally factored
+steps into `shared/steps/` snippets, cutting structural duplication by 6–16 pp. The
+higher baseline in `workflows-3` reflects a more aggressive env-var consolidation
+strategy that makes repetition in the generated output more visible.
+
 ## Key jq++ concepts used
 
 ### `$extends` at the document level — workflow bases

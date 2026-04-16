@@ -1,26 +1,24 @@
-# Refactoring Report: workflows/
+# Refactoring Report: workflows-3-human-led-lenient
 
 ## Metrics
 
 | | Generated (baseline) | Refactored sources | of which: shared | Change |
 |---|---|---|---|---|
-| Lines | 328 | 265 | 54 | −63 (−19%) |
-| Words | 975 | 762 | 176 | −213 (−22%) |
+| Lines | 328 | 259 | 48 | −69 (−21.0%) |
+| Words | 975 | 698 | 112 | −277 (−28.4%) |
+| DuplicationRatio | 18.7% | 3.1% | — | −15.6 pp |
 
 ### Per-subfolder breakdown
 
-Leaf counts exclude shared/; the shared/ row is the cost amortised across all
-three groups. The generated baseline is larger than in the prior snapshot
-because env vars pulled into the shared base now appear in all generated files
-(including workflows that do not use them), per the relaxed `env:` check.
+Leaf counts exclude `shared/`; the shared row is the cost amortised across all three groups.
 
 | Subfolder | Generated lines | Generated words | Leaf lines | Leaf words | Δ lines | Δ words |
 |---|---|---|---|---|---|---|
 | deploy-cloudrun | 203 | 571 | 100 | 242 | −103 (−51%) | −329 (−58%) |
-| create-cloud-deploy-release | 66 | 240 | 52 | 179 | −16 (−24%) | −61 (−25%) |
+| create-cloud-deploy-release | 68 | 240 | 52 | 179 | −16 (−24%) | −61 (−25%) |
 | get-gke-credentials | 57 | 164 | 59 | 165 | +2 (+4%) | +1 (+1%) |
-| shared/ | — | — | 54 | 176 | — | — |
-| **Total** | **328** | **975** | **265** | **762** | **−63 (−19%)** | **−213 (−22%)** |
+| shared/ | — | — | 48 | 112 | — | — |
+| **Total** | **328** | **975** | **259** | **698** | **−69 (−21.0%)** | **−277 (−28.4%)** |
 
 ## Verification
 
@@ -99,6 +97,8 @@ env:
   APP: YOUR_APP_NAME
 ```
 
+The "lenient" policy means env vars that appear in the majority of workflows
+are promoted to the shared base even if not every variant uses all of them.
 `REGION` in `create-cloud-deploy-release` remains as the only leaf-level env
 override (`YOUR_APP_REGION` vs the base's `YOUR_SERVICE_REGION`), because the
 values genuinely differ and cannot be merged.
@@ -134,6 +134,16 @@ to inherit the common shape and override only what differs:
 | `build-and-push-step.yaml++` | name, run (`build_and_push`) | `run` → `build_and_push_with_repo` |
 | `build-and-push-app-step.yaml++` | name, run (`build_and_push_with_app`) | — |
 | `deploy-cloudrun-step.yaml++` | name, id, uses @v0, service, region | `uses @v2`, `with.image`, `with.metadata`, `with.source` |
+
+### DuplicationRatio interpretation
+
+The large baseline duplication ratio (18.7%, 4 maximal dup groups, 52 excess
+key-value pairs) reflects that the workflows-3 originals carry more structural
+repetition than workflows-2 (9.0%). This is consistent with the lenient env-var
+strategy: promoting all env vars into the shared base causes the generated
+output to include those fields uniformly across all variants, increasing
+measured structural overlap in the baseline. The refactored sources reduce this
+to 3.1% (−15.6 pp), the strongest improvement across all three approaches.
 
 ### Per-subfolder outcomes
 

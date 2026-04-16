@@ -1,11 +1,12 @@
-# Refactoring Report: workflows
+# Refactoring Report: workflows-1-full-ai-round
 
 ## Metrics
 
 | | Generated (baseline) | Refactored sources | of which: shared | Change |
 |---|---|---|---|---|
-| Lines | 407 | 379 | 18 | −28 (−7%) |
-| Words | 1107 | 1094 | 26 | −13 (−1%) |
+| Lines | 407 | 379 | 18 | −28 (−6.9%) |
+| Words | 1107 | 1094 | 26 | −13 (−1.2%) |
+| DuplicationRatio | 6.8% | 7.2% | — | +0.4 pp |
 
 ## Verification
 
@@ -15,7 +16,7 @@ PASS — 11/11 files match.
 
 ### What was refactored
 
-The `workflows/` directory contains 11 YAML files across three subdirectories:
+The `workflows-1-full-ai-round/` directory contains 11 YAML files across three subdirectories:
 
 - `deploy-cloudrun/` — 4 GitHub Actions workflow `.yml` files and 1 service template
 - `create-cloud-deploy-release/` — 1 workflow `.yml` and 4 config templates
@@ -92,16 +93,32 @@ constraint inherent to jq++.
 
 ---
 
+### DuplicationRatio interpretation
+
+The DuplicationRatio in the refactored sources (+0.4 pp, 6.8% → 7.2%) is essentially
+unchanged, which is expected: refactoring into shared bases introduces new structural
+patterns that can appear as "duplication" when the base is extended by multiple leaf
+files. The key savings here are not in structural deduplication of the source (the
+originals had low duplication to begin with at 6.8%), but in the named abstractions that
+communicate intent and enforce consistency.
+
+No shared step files were created; all four Cloud Run variants still inline every step
+in full. This limits the savings compared to the human-led approaches (see
+`workflows-2-human-led-strict` and `workflows-3-human-led-lenient`), which factor
+repeated steps into `shared/steps/` snippets and achieve −9 pp and −16 pp duplication
+reductions respectively.
+
+---
+
 ### Comment stripping
 
 All original workflow files carry 40–100 lines of documentation comments (API lists, IAM
 permission tables, setup instructions). These are stripped during the jq++ → yq
 round-trip. The generated baseline in `.refactoring/generated/` therefore represents
-clean, comment-free YAML. The originals in `workflows/` are untouched and retain their
-comments.
+clean, comment-free YAML. The originals in `workflows-1-full-ai-round/` are untouched
+and retain their comments.
 
-The apparent reduction against the raw originals (891 lines → 379 source lines, −58%) is
+The apparent reduction against the raw originals (891 lines → 379 source lines, −57%) is
 largely driven by comment removal rather than structural deduplication. Against the
 comment-stripped baseline (407 lines), the refactored sources are 379 lines — a modest
-7% reduction, with the primary benefit being the named shared bases that communicate
-intent and enforce consistency.
+6.9% reduction.

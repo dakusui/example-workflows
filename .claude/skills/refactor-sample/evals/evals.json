@@ -1,0 +1,101 @@
+{
+  "skill_name": "refactor-sample",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Refactor the helloworld sample using jq++. The sample is at samples/helloworld/. Place the refactored sources under samples/.refactored/helloworld/, shared base files under samples/.refactored/shared/, and create a generate.sh. Run generate.sh to produce samples/.generated/helloworld/, verify the output matches the original, and report metrics (lines and words before/after) plus any interesting findings.",
+      "expected_output": "Refactored .yaml++ source files with $extends inheritance for the two near-identical Deployments, a generate.sh that correctly reproduces helloworld.yaml, verification PASS, and a metrics report.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "generate_sh_exists_and_executable",
+          "description": "samples/.refactored/helloworld/generate.sh exists and is executable"
+        },
+        {
+          "name": "generated_output_exists",
+          "description": "samples/.generated/helloworld/helloworld.yaml exists"
+        },
+        {
+          "name": "semantic_equivalence",
+          "description": "yq -o=json of original and generated helloworld.yaml produce identical JSON (ignoring formatting)"
+        },
+        {
+          "name": "uses_extends_or_local",
+          "description": "At least one .yaml++ file under samples/.refactored/helloworld/ contains '$extends' or '$local'"
+        },
+        {
+          "name": "line_reduction",
+          "description": "Total lines in .yaml++ sources <= total lines in original .yaml files"
+        },
+        {
+          "name": "two_deployments_share_base",
+          "description": "Both deployment .yaml++ files reference a common base file via $extends (the key v1/v2 refactoring)"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Refactor the sleep sample using jq++. The sample is at samples/sleep/. Place the refactored sources under samples/.refactored/sleep/, shared base files under samples/.refactored/shared/, and create a generate.sh. Run generate.sh to produce samples/.generated/sleep/, verify the output matches the original, and report metrics (lines and words before/after) plus any interesting findings.",
+      "expected_output": "Refactored .yaml++ source files, a generate.sh that correctly reproduces sleep.yaml, verification PASS, and a metrics report noting the app-name parametrization pattern.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "generate_sh_exists_and_executable",
+          "description": "samples/.refactored/sleep/generate.sh exists and is executable"
+        },
+        {
+          "name": "generated_output_exists",
+          "description": "samples/.generated/sleep/sleep.yaml exists"
+        },
+        {
+          "name": "semantic_equivalence",
+          "description": "yq -o=json of original and generated sleep.yaml produce identical JSON (ignoring formatting)"
+        },
+        {
+          "name": "uses_extends_or_local",
+          "description": "At least one .yaml++ file under samples/.refactored/sleep/ contains '$extends' or '$local'"
+        },
+        {
+          "name": "line_reduction",
+          "description": "Total lines in .yaml++ sources <= total lines in original .yaml files"
+        },
+        {
+          "name": "shared_base_referenced",
+          "description": "At least one file in samples/.refactored/shared/ is referenced from sleep's .yaml++ sources"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Refactor the curl sample using jq++. The sample is at samples/curl/. Place the refactored sources under samples/.refactored/curl/, shared base files under samples/.refactored/shared/, and create a generate.sh. Run generate.sh to produce samples/.generated/curl/, verify the output matches the original, and report metrics (lines and words before/after) plus any interesting findings.",
+      "expected_output": "Refactored .yaml++ source files reusing shared bases (ideally overlapping with sleep's shared base), a generate.sh that correctly reproduces curl.yaml, verification PASS, and a metrics report.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "generate_sh_exists_and_executable",
+          "description": "samples/.refactored/curl/generate.sh exists and is executable"
+        },
+        {
+          "name": "generated_output_exists",
+          "description": "samples/.generated/curl/curl.yaml exists"
+        },
+        {
+          "name": "semantic_equivalence",
+          "description": "yq -o=json of original and generated curl.yaml produce identical JSON (ignoring formatting)"
+        },
+        {
+          "name": "uses_extends_or_local",
+          "description": "At least one .yaml++ file under samples/.refactored/curl/ contains '$extends' or '$local'"
+        },
+        {
+          "name": "line_reduction",
+          "description": "Total lines in .yaml++ sources <= total lines in original .yaml files"
+        },
+        {
+          "name": "shared_base_referenced",
+          "description": "At least one file in samples/.refactored/shared/ is referenced from curl's .yaml++ sources"
+        }
+      ]
+    }
+  ]
+}

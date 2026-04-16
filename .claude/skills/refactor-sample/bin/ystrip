@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# ystrip — remove all object keys starting with '_' from YAML input.
+#
+# Recursively walks every object at any depth and drops keys whose names
+# begin with an underscore ('_').  Useful for stripping private/internal
+# fields added during jq++ elaboration before feeding output downstream.
+#
+# Usage:
+#   ystrip [FILE ...]
+#   cat input.yaml | ystrip
+#
+# Reads from stdin when no FILE arguments are given.
+# Handles multi-document YAML files (--- separated).
+
+set -euo pipefail
+
+yq -y 'walk(if type == "object" then with_entries(select(.key | startswith("_") | not)) else . end)' "$@"

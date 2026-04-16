@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# yq++ — elaborate a multi-document .yaml[++] file to stdout.
+#
+# Splits the input on --- boundaries into temporary part-files (preserving
+# the source extension so jq++ directives are not mangled), elaborates each
+# part (via jq++ for .yaml++, via yq for .yaml), and concatenates the results
+# to stdout with --- separators.
+#
+# Relative $extends paths in .yaml++ files (e.g. shared/base.yaml++) are
+# resolved correctly because the temp directory mirrors the input file's
+# directory via symlinks.
+#
+# Usage:
+#   yq++ FILE
+#   yq++ FILE > output.yaml
+
+set -euo pipefail
+
+SKILL_BIN="$(cd "$(dirname "$0")" && pwd)"
+
+# ── argument parsing ──────────────────────────────────────────────────────────
+if [[ $# -eq 0 ]] || [[ "$1" == -h ]] || [[ "$1" == --help ]]; then
+  sed -n '2,/^$/p' "$0" | grep '^#' | sed 's/^# \?//'
+  exit 0
+fi
+if [[ $# -ne 1 ]]; then
+  echo "yq++: expected exactly one FILE argument" >&2
+  exit 1
+fi
+
+input="$1"
+
+if [[ ! -f "${input}" ]]; then
+  echo "yq++: file not found: ${input}" >&2
+  exit 1
+fi
+
+# ── determine stem and extension ──────────────────────────────────────────────
+base="$(basename "${input}")"
+case "${base}" in
+  *.yaml++) stem="${base%.yaml++}"; ext=".yaml++" ;;
+  *.yaml)   stem="${base%.yaml}";   ext=".yaml"   ;;
+  *)        echo "yq++: unsupported extension: ${base}" >&2; exit 1 ;;
+esac
+
+# ── set up temp dir mirroring the input's directory ──────────────────────────
+# Symlink all immediate contents of the input directory so that relative
+# $extends paths (e.g. shared/base.yaml++) resolve from within the temp dir.
+input_dir="$(cd "$(dirname "${input}")" && pwd)"
+tmpdir="$(mktemp -d)"
+trap "rm -rf '${tmpdir}'" EXIT
+
+for item in "${input_dir}"/* "${input_dir}"/.[^.]*; do
+  [[ -e "${item}" ]] || continue
+  ln -s "${item}" "${tmpdir}/$(basename "${item}")" 2>/dev/null || true
+done
+
+# Use a hidden temp stem to avoid colliding with any symlinked @-files.
+tmp_stem=".yqpp_$$_${stem}"
+
+# ── raw-split into temp part-files ───────────────────────────────────────────
+# No yq formatting pass here — that would corrupt jq++ directives in .yaml++.
+awk -v dir="${tmpdir}" -v stem="${tmp_stem}" -v ext="${ext}" '
+  BEGIN { idx = 1; buf = "" }
+  /^---[[:space:]]*$/ {
+    if (buf ~ /[^[:space:]]/) {
+      fname = dir "/" stem "@" sprintf("%02d", idx) ext
+      printf "%s", buf > fname
+      close(fname)
+      idx++
+    }
+    buf = ""
+    next
+  }
+  { buf = buf $0 "\n" }
+  END {
+    if (buf ~ /[^[:space:]]/) {
+      fname = dir "/" stem "@" sprintf("%02d", idx) ext
+      printf "%s", buf > fname
+      close(fname)
+    }
+  }
+' "${input}"
+
+# ── render each part and emit to stdout ──────────────────────────────────────
+first=true
+while IFS= read -r f; do
+  [[ -z "${f}" ]] && continue
+  [[ "${first}" == "true" ]] || printf -- "---\n"
+  first=false
+  if [[ "${ext}" == ".yaml++" ]]; then
+    jq++ "${f}" | yq -y '.'
+  else
+    yq -y '.' "${f}"
+  fi
+done < <(find "${tmpdir}" -maxdepth 1 -name "${tmp_stem}@*${ext}" | sort)
