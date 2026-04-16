@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# ysplit — split a multi-document .yaml file into {stem}@{NN}.yaml parts.
+#
+# Each YAML document (separated by ---) becomes its own file, re-formatted
+# through yq -y '.'.  Output files use two-digit zero-padded sequence numbers
+# as the identifier, e.g.:
+#
+#   httpbin.yaml  →  httpbin@01.yaml  httpbin@02.yaml  httpbin@03.yaml
+#
+# Usage:
+#   ysplit [--out-dir OUT_DIR] FILE [FILE ...]
+#
+# Defaults:
+#   OUT_DIR  = directory of each input FILE
+
+set -euo pipefail
+
+# ── argument parsing ─────────────────────────────────────────────────────────
+OUT_DIR=""
+files=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --out-dir) OUT_DIR="$2"; shift 2 ;;
+    -h|--help)
+      sed -n '2,/^$/p' "$0" | grep '^#' | sed 's/^# \?//'
+      exit 0
+      ;;
+    -*) echo "ysplit: unknown option: $1" >&2; exit 1 ;;
+    *)  files+=("$1"); shift ;;
+  esac
+done
+
+if [[ ${#files[@]} -eq 0 ]]; then
+  echo "ysplit: no input files specified" >&2
+  exit 1
+fi
+
+# ── split a single file ──────────────────────────────────────────────────────
+split_one() {
+  local input="$1"
+  local stem out_dir tmpdir idx f out
+
+  stem="$(basename "${input}" .yaml)"
+  out_dir="${OUT_DIR:-$(dirname "$(realpath "${input}")")}"
+  mkdir -p "${out_dir}"
+
+  tmpdir="$(mktemp -d)"
+  # shellcheck disable=SC2064
+  trap "rm -rf '${tmpdir}'" RETURN
+
+  # Split on --- boundary lines using awk; use zero-padded names so globs sort.
+  awk -v dir="${tmpdir}" '
+    BEGIN { idx=1; buf="" }
+    /^---[[:space:]]*$/ {
+      if (buf ~ /[^[:space:]]/) {
+        fname = dir "/" sprintf("%03d", idx) ".tmp"
+        printf "%s", buf > fname
+        close(fname)
+        idx++
+      }
+      buf = ""
+      next
+    }
+    { buf = buf $0 "\n" }
+    END {
+      if (buf ~ /[^[:space:]]/) {
+        fname = dir "/" sprintf("%03d", idx) ".tmp"
+        printf "%s", buf > fname
+        close(fname)
+      }
+    }
+  ' "${input}"
+
+  # Re-format each chunk through yq and write final output files.
+  idx=1
+  for f in "${tmpdir}"/*.tmp; do
+    [[ -e "${f}" ]] || continue
+    out="${out_dir}/${stem}@$(printf '%02d' "${idx}").yaml"
+    yq -y '.' "${f}" > "${out}"
+    echo "Split: ${out}"
+    (( idx++ ))
+  done
+}
+
+# ── process each input file ──────────────────────────────────────────────────
+for f in "${files[@]}"; do
+  split_one "${f}"
+done

@@ -1,23 +1,24 @@
-# Refactoring Report: workflows/
+# Refactoring Report: workflows-2-human-led-strict
 
 ## Metrics
 
 | | Generated (baseline) | Refactored sources | of which: shared | Change |
 |---|---|---|---|---|
-| Lines | 316 | 271 | 50 | −45 (−14%) |
-| Words | 951 | 775 | 168 | −176 (−19%) |
+| Lines | 316 | 265 | 44 | −51 (−16.1%) |
+| Words | 951 | 711 | 104 | −240 (−25.2%) |
+| DuplicationRatio | 9.0% | 3.0% | — | −6.0 pp |
 
 ### Per-subfolder breakdown
 
-Leaf counts exclude shared/; the shared/ row is the cost amortised across all three groups.
+Leaf counts exclude `shared/`; the shared row is the cost amortised across all three groups.
 
 | Subfolder | Generated lines | Generated words | Leaf lines | Leaf words | Δ lines | Δ words |
 |---|---|---|---|---|---|---|
 | deploy-cloudrun | 193 | 551 | 108 | 259 | −85 (−44%) | −292 (−53%) |
 | create-cloud-deploy-release | 66 | 236 | 54 | 183 | −12 (−18%) | −53 (−22%) |
 | get-gke-credentials | 57 | 164 | 59 | 165 | +2 (+4%) | +1 (+1%) |
-| shared/ | — | — | 50 | 168 | — | — |
-| **Total** | **316** | **951** | **271** | **775** | **−45 (−14%)** | **−176 (−19%)** |
+| shared/ | — | — | 44 | 104 | — | — |
+| **Total** | **316** | **951** | **265** | **711** | **−51 (−16.1%)** | **−240 (−25.2%)** |
 
 ## Verification
 
@@ -29,16 +30,19 @@ PASS — 6/6 files match.
 
 Three workflow groups were refactored: `deploy-cloudrun` (4 files),
 `create-cloud-deploy-release` (1 file), and `get-gke-credentials` (1 file).
-Kubernetes/Knative manifests and Cloud Deploy config files that happened to
-live in the same directories were explicitly excluded from scope — they are
-supporting artefacts, not workflow definitions.
+Kubernetes/Knative manifests and Cloud Deploy config files that lived in the
+same directories were excluded — they are supporting artefacts, not workflow
+definitions.
 
 ### Shared workflow base (`cloudrun-workflow-base.yaml++`)
 
 All five workflow files share the same `on.push.branches` trigger, job
 `permissions`, `runs-on`, and three env vars (`PROJECT_ID`, `SERVICE`,
 `REGION`). These were extracted into a single document-level base used by
-every leaf via `$extends` at the document root.
+every leaf via `$extends` at the document root. The "strict" policy means only
+env vars truly common to every Cloud Run variant appear in the base;
+workflow-specific variables (GAR_LOCATION, REPOSITORY, SOURCE_DIRECTORY, etc.)
+remain in each individual leaf file.
 
 ### GAR image reference functions (`cloudrun.jq`)
 
